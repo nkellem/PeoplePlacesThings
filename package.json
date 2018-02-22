@@ -4,7 +4,12 @@
   "description": "Log your location and view your friends in real time!",
   "main": "./src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Tests Completed\"",
+    "pretest": "eslint ./src --fix",
+    "start": "node ./src/server.js",
+    "nodemon": "nodemon --watch ./src ./src/server.js",
+    "build": "babel ./client/js --out-file ./client/babel/bundle.js",
+    "watch": "babel --watch ./client/js --out-file ./client/babel/bundle.js"
   },
   "author": "Noah Kellem",
   "license": "ISC",
