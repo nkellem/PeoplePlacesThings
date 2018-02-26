@@ -9,7 +9,7 @@ const urlStruct = {
   '/': htmlHandler.getIndex,
   '/connect': htmlHandler.getLogin,
   '/babel/bundle.js': htmlHandler.getJS,
-  notFound: htmlHandler.getNotFound,
+  notFound: htmlHandler.notFound,
 };
 
 const onRequest = (request, response) => {
