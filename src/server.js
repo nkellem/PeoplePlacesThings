@@ -9,7 +9,7 @@ const urlStruct = {
   '/': htmlHandler.getIndex,
   '/connect': htmlHandler.getLogin,
   '/babel/bundle.js': htmlHandler.getJS,
-  'notFound': htmlHandler.getNotFound,
+  notFound: htmlHandler.getNotFound,
 };
 
 const onRequest = (request, response) => {
@@ -31,7 +31,7 @@ console.log(`Listening on localhost:${PORT}`);
 // pass in the http server into socketio and grab the websocket sever as io
 const io = socketio(app);
 
-let users = {
+const users = {
   test: {
     lat: 43.161030,
     lng: -77.610924,
@@ -41,9 +41,9 @@ let users = {
 const onJoined = (sock) => {
   const socket = sock;
 
-  socket.on('join', data => {
+  socket.on('join', (data) => {
     socket.join('room1');
-    users[data.user] = {lat: data.lat, lng: data.lng};
+    users[data.user] = { lat: data.lat, lng: data.lng };
     console.dir(users);
     socket.emit('updateMap', users);
   });
@@ -69,6 +69,7 @@ io.sockets.on('connection', (socket) => {
   console.log('started');
 
   onJoined(socket);
+  onUpdateClientMap(socket);
   onDisconnect(socket);
 });
 

@@ -1,4 +1,5 @@
 const fs = require('fs');
+
 const index = fs.readFileSync(`${__dirname}/../client/index.html`);
 const login = fs.readFileSync(`${__dirname}/../client/login.html`);
 const fourOFour = fs.readFileSync(`${__dirname}/../client/404.html`);
