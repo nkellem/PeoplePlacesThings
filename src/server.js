@@ -25,19 +25,12 @@ const io = socketio(app);
 
 // users object to store our users in their respective rooms
 // loads some dummy users for testing purposes
-// these users only show up when joining the rooms 'testRoom' and 'testRoom2'
+// these users only show up when joining the room 'testRoom'
 const users = {
   testRoom: {
     test: {
       lat: 43.161030,
       lng: -77.610924,
-    },
-  },
-
-  testRoom2: {
-    test: {
-      lat: 35.161030,
-      lng: -70.610924,
     },
   },
 };
@@ -90,11 +83,9 @@ io.sockets.on('connection', (socket) => {
 
   // this is for testing purposes
   users.testRoom.test.lat = 43.161030;
-  users.testRoom2.test.lat = 35.161030;
   setInterval(() => {
     console.log('changing');
     users.testRoom.test.lat += 0.1;
-    users.testRoom2.test.lat += 0.1;
     io.sockets.in('testRoom').emit('updateMap', users.testRoom);
   }, 5000);
 });

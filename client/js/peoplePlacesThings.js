@@ -1,3 +1,5 @@
+//Code references I used for all code relating to Google Maps API can be found here: https://developers.google.com/maps/documentation/javascript/examples/marker-remove
+//Code references I used for all code relating to Geolocation Web API can be found here: https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/Using_geolocation
 (function() {
   let map;
   let infoWindow;
