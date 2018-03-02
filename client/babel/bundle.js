@@ -1,9 +1,9 @@
-"use strict";
 'use strict';
 
 (function () {
-  var map;
-  var infoWindow;
+  var map = void 0;
+  var infoWindow = void 0;
+  var markers = [];
 
   //initializes the map view
   //sets up where the center of the map is, zoom level, type, and markers
@@ -33,6 +33,8 @@
     google.maps.event.addListener(marker, 'click', function (e) {
       makeInfoWindow(pos, title);
     });
+
+    markers.push(marker);
   };
 
   //creates the overlay that describes what a marker represents
@@ -50,41 +52,87 @@
     });
   };
 
-  var getLatLang = function getLatLang() {
-    var pos = void 0;
-    navigator.geolocation.getCurrentPosition(function (position) {
-      console.dir(position);
-      pos = position.coords;
+  //Sets the map on all markers in the array.
+  var setMapOnAll = function setMapOnAll(map) {
+    markers.forEach(function (marker) {
+      marker.setMap(map);
     });
-    console.dir(pos);
-    return pos;
   };
 
-  //initialize connection to the server
+  //Removes the markers from the map, but keeps them in the array.
+  var clearMarkers = function clearMarkers() {
+    setMapOnAll(null);
+  };
+
+  //Deletes all markers in the array by removing references to them.
+  var deleteMarkers = function deleteMarkers() {
+    clearMarkers();
+    markers = [];
+  };
+
+  //sets up the user room login and user name
+  //creates websocket connection
+  //inits the google maps view and loads other room users data
   var init = function init() {
-    var user = 'User' + Math.floor(Math.random() * 1000);
+    document.querySelector('#submit').onclick = function (e) {
+      e.preventDefault();
+      //get the data from the form
+      var room = document.querySelector('#room').value;
+      var user = document.querySelector('#username').value;
+      //basic form validation
+      if (user.indexOf(' ') > -1 || user === '') {
+        alert('Please enter a username without spaces or isn\'t blank');
+        return;
+      }
 
-    navigator.geolocation.getCurrentPosition(function (position) {
-      var socket = io.connect();
+      if (room.indexOf(' ') > -1 || room === '') {
+        alert('Please enter a room name without spaces or isn\'t blank');
+        return;
+      }
+      //get the html elements we want to hide and show
+      var login = document.querySelector('#login');
+      var map = document.querySelector('#map');
+      login.style.display = 'none';
+      map.style.display = 'block';
 
-      initMap(position.coords.latitude, position.coords.longitude);
+      //send the initial Websocket connect with GPS coordinates
+      navigator.geolocation.getCurrentPosition(function (position) {
+        var socket = io.connect();
 
-      socket.on('connect', function () {
-        socket.emit('join', { user: user, lat: position.coords.latitude, lng: position.coords.longitude });
-      });
-
-      socket.on('updateMap', function (data) {
-        var users = data;
-
-        Object.keys(users).forEach(function (currUser) {
-          if (currUser === user) {
-            addMarker(users[currUser].lat, users[currUser].lng, 'Me');
-          } else {
-            addMarker(users[currUser].lat, users[currUser].lng, currUser);
-          }
+        //send websocket connection and initialize google map
+        socket.on('connect', function () {
+          initMap(position.coords.latitude, position.coords.longitude);
+          socket.emit('join', { user: user, lat: position.coords.latitude, lng: position.coords.longitude, room: room });
         });
+
+        //set up update map event
+        socket.on('updateMap', function (data) {
+          var users = data;
+          deleteMarkers();
+
+          Object.keys(users).forEach(function (currUser) {
+            if (currUser === user) {
+              addMarker(users[currUser].lat, users[currUser].lng, 'Me');
+            } else {
+              addMarker(users[currUser].lat, users[currUser].lng, currUser);
+            }
+          });
+        });
+
+        //send GPS updates to the server every 30 seconds
+        setInterval(function () {
+          navigator.geolocation.getCurrentPosition(function (position) {
+            var pos = position.coords;
+            var data = {
+              user: user,
+              lat: pos.latitude,
+              lng: pos.longitude
+            };
+            socket.emit('sendUpdate', data);
+          });
+        }, 30000);
       });
-    });
+    };
   };
 
   window.onload = init;

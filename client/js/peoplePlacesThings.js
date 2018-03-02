@@ -1,6 +1,7 @@
 (function() {
-  var map;
-  var infoWindow;
+  let map;
+  let infoWindow;
+  let markers = [];
 
   //initializes the map view
   //sets up where the center of the map is, zoom level, type, and markers
@@ -30,6 +31,8 @@
       google.maps.event.addListener(marker, 'click', e => {
           makeInfoWindow(pos, title);
       });
+
+      markers.push(marker);
   };
 
   //creates the overlay that describes what a marker represents
@@ -47,42 +50,88 @@
       });
   };
 
-  const getLatLang = () => {
-    let pos;
-    navigator.geolocation.getCurrentPosition(position => {
-      console.dir(position);
-      pos = position.coords;
+  //Sets the map on all markers in the array.
+  const setMapOnAll = map => {
+    markers.forEach(marker => {
+      marker.setMap(map);
     });
-    console.dir(pos);
-    return pos;
   };
 
-  //initialize connection to the server
+  //Removes the markers from the map, but keeps them in the array.
+  const clearMarkers = () => {
+    setMapOnAll(null);
+  };
+
+  //Deletes all markers in the array by removing references to them.
+  const deleteMarkers = () => {
+    clearMarkers();
+    markers = [];
+  };
+
+  //sets up the user room login and user name
+  //creates websocket connection
+  //inits the google maps view and loads other room users data
   const init = () => {
-    const user = `User${Math.floor(Math.random() * 1000)}`;
+    document.querySelector('#submit').onclick = e => {
+      e.preventDefault();
+      //get the data from the form
+      const room = document.querySelector('#room').value;
+      const user = document.querySelector('#username').value;
+      //basic form validation
+      if (user.indexOf(' ') > -1 || user === '') {
+        alert('Please enter a username without spaces or isn\'t blank');
+        return;
+      }
 
-    navigator.geolocation.getCurrentPosition(position => {
-      const socket = io.connect();
+      if (room.indexOf(' ') > -1 || room === '') {
+        alert('Please enter a room name without spaces or isn\'t blank');
+        return;
+      }
+      //get the html elements we want to hide and show
+      const login = document.querySelector('#login');
+      const map = document.querySelector('#map');
+      login.style.display = 'none';
+      map.style.display = 'block';
 
-      initMap(position.coords.latitude, position.coords.longitude);
+      //send the initial Websocket connect with GPS coordinates
+      navigator.geolocation.getCurrentPosition(position => {
+        const socket = io.connect();
 
-      socket.on('connect', () => {
-        socket.emit('join', {user, lat: position.coords.latitude, lng: position.coords.longitude});
-      });
-
-      socket.on('updateMap', data => {
-        const users = data;
-
-        Object.keys(users).forEach(currUser => {
-          if (currUser === user) {
-            addMarker(users[currUser].lat, users[currUser].lng, 'Me');
-          } else {
-            addMarker(users[currUser].lat, users[currUser].lng, currUser);
-          }
+        //send websocket connection and initialize google map
+        socket.on('connect', () => {
+          initMap(position.coords.latitude, position.coords.longitude);
+          socket.emit('join', {user, lat: position.coords.latitude, lng: position.coords.longitude, room});
         });
-      });
 
-    });
+        //set up update map event
+        socket.on('updateMap', data => {
+          const users = data;
+          deleteMarkers();
+
+          Object.keys(users).forEach(currUser => {
+            if (currUser === user) {
+              addMarker(users[currUser].lat, users[currUser].lng, 'Me');
+            } else {
+              addMarker(users[currUser].lat, users[currUser].lng, currUser);
+            }
+          });
+        });
+
+        //send GPS updates to the server every 30 seconds
+        setInterval(()=> {
+          navigator.geolocation.getCurrentPosition(position => {
+            let pos = position.coords;
+            let data = {
+              user,
+              lat: pos.latitude,
+              lng: pos.longitude,
+            };
+            socket.emit('sendUpdate', data);
+          });
+        }, 30000);
+
+      });
+    };
   };
 
   window.onload = init;
