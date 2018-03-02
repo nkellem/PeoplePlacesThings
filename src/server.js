@@ -89,6 +89,8 @@ io.sockets.on('connection', (socket) => {
   onDisconnect(socket);
 
   // this is for testing purposes
+  users.testRoom.test.lat = 43.161030;
+  users.testRoom2.test.lat = 35.161030;
   setInterval(() => {
     console.log('changing');
     users.testRoom.test.lat += 0.1;
