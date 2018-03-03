@@ -12,7 +12,16 @@ const PORT = process.env.PORT || process.env.NODE_PORT || 3000;
 
 // serves files upon request from the client
 const onRequest = (request, response) => {
-  fileServer.serve(request, response);
+  fileServer.serve(request, response, err => {
+    if (err) {
+      response.writeHead(404, { 'Content-Type': 'application/json' });
+      response.write({
+        data: 'The page you are looking for was not found.',
+        id: 'notFound',
+      });
+      response.end();
+    };
+  });
 };
 
 // start the server
