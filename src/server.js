@@ -15,7 +15,7 @@ const onRequest = (request, response) => {
   fileServer.serve(request, response, err => {
     if (err) {
       response.writeHead(404, { 'Content-Type': 'application/json' });
-      response.write({
+      response.write('404', {
         data: 'The page you are looking for was not found.',
         id: 'notFound',
       });
